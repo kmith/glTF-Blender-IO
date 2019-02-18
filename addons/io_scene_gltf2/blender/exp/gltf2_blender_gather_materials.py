@@ -95,10 +95,19 @@ def __gather_alpha_mode(blender_material, export_settings):
 
 def __gather_double_sided(blender_material, export_settings):
     old_double_sided_socket = gltf2_blender_get.get_socket_or_texture_slot_old(blender_material, "DoubleSided")
-    if old_double_sided_socket is not None and\
-            not old_double_sided_socket.is_linked and\
-            old_double_sided_socket.default_value > 0.5:
-        return True
+    if old_double_sided_socket is not None and not old_double_sided_socket.is_linked:
+        if old_double_sided_socket.default_value > 0.5:
+            # Material marked as double-sided
+            return True
+        # Material explicitly marked as NOT double-sided
+        return None
+
+    # Look for any double-sided mesh that uses this material
+    for mesh in bpy.data.meshes:
+        if mesh.show_double_sided and mesh.users > 0:
+            for mesh_mat in mesh.materials:
+                if mesh_mat == blender_material:
+                    return True
     return None
 
 
